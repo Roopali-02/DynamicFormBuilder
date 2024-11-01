@@ -1,14 +1,17 @@
-import React,{useState} from 'react';
-import {Box,Typography,Container,TextField,FormControl,InputLabel,Select,MenuItem,Button} from '@mui/material';
+import React,{useState,useContext} from 'react';
+import { Box, Typography, Container, TextField, FormControl, InputLabel, Select, MenuItem, Button, Checkbox, FormControlLabel } from '@mui/material';
+import axios from 'axios';
+import AllFields from './AllFields';
+import { FormContext } from '../context/FormContext';
 
 const FormBuilder = () => {
-	const [formFields,setFormFields]= useState([]);
-	const [formValues, setFormValues] = useState({});
+	const { formFields, setFormFields, getAllFields } = useContext(FormContext);
 	const [newField,setNewField] = useState({
-		id:'',
 		type:'',
 		label:'',
-		validation:{required:false}
+		NoOfOptions:null,
+		required:false,
+		options: [] 
 	});
 
 	const handleInputChange = (e)=>{
@@ -16,26 +19,63 @@ const FormBuilder = () => {
 		 setNewField((prev)=>({...prev,[name]:value}))
 	}
 
-	const addField=(e)=>{
-		e.preventDefault();
-		if(newField.label&&newField.type){
-			const newFieldObj = {...newField, id: Date.now()};
-			setFormFields((prevFields)=>[...prevFields,newFieldObj]);
-			setFormValues((prevValues) => ({ ...prevValues, [newFieldObj.id]: '' }));
-			setNewField({ id: '', type: '', label: '', validation: { required: false } });
-		}
+	const handleOptionChange = (e,index)=>{
+		setNewField((prev) => {
+			const options = [...prev.options];
+			options[index] = { value: e.target.value};
+			return {
+				...prev,
+				options: options,
+			};
+		});
 	}
 
-	console.log(formValues);
+	const addField=async(e)=>{
+		e.preventDefault();
+		try{
+			if (newField.label && newField.type) {
+				const response = await axios.post('/api/add-field', {
+					label: newField.label,
+					type: newField.type,
+					required: newField.required,
+					NoOfOptions: newField.NoOfOptions
+				});
+
+				if (newField.type==='dropdown'){
+					const fieldId = response.data.id;
+					const updatedOptions = newField.options.map(option => ({
+						value: option.value,
+					}));
+					await axios.post(`/api/fields/${fieldId}`, { options: updatedOptions });
+				}
+
+				setNewField({ type: '', label: '', NoOfOptions: null, required: false, options: [] });
+				getAllFields();
+			}
+		}catch(err){
+			console.log(err);
+		}
+		
+	}
+
+	const handleValidationChange = (e) => {
+		setNewField((prev) => ({
+			...prev,
+			required: e.target.checked 
+		}
+		));
+	};
+
 	return (
-		<Box className='w-full min-h-screen'>
-			<Container maxWidth='xs' className='mt-12 pageBg'>
-				 <Typography variant='h4'>Dynamic Form Builder</Typography>
-				 <form onSubmit={addField} className='p-4'>
+		<Box className='w-full flex gap-2'>
+			<Container maxWidth='xs' className='mt-10 pageBg p-4'>
+				 <Typography variant='h4' className='text-center'>Dynamic Form Builder</Typography>
+				 <form onSubmit={addField} className='p-4 shadow-lg'>
 					<TextField
 						size='small'
 						label="Label"
 						name='label'
+						type='text'
 						value={newField.label}
 						onChange={handleInputChange}
 						sx={{my:1}}
@@ -44,7 +84,7 @@ const FormBuilder = () => {
 					/>
 					<FormControl
 						size='small'
-						sx={{ mb:2}}
+						sx={{ mb:1}}
 						fullWidth
 						required
 					>
@@ -64,14 +104,63 @@ const FormBuilder = () => {
 							<MenuItem value='checkbox'>Checkbox</MenuItem>
 						</Select>
 					</FormControl>
+					{
+						newField.type ==='dropdown'&&
+						(
+							<>
+								<TextField
+									size='small'
+									label="No. of options"
+									type='number'
+									name='NoOfOptions'
+									value={newField.NoOfOptions || null}
+									onChange={(e) => setNewField((prev)=>({...prev,
+										NoOfOptions: parseInt(e.target.value, 10) || 0,
+										options: Array.from({ length: parseInt(e.target.value, 10) || 0 }, () => ({ value: '' })),
+									}))}
+									sx={{ my: 1 }}
+									fullWidth
+									required
+								/>
+								{
+									newField.options.map((option,index)=>(
+										<TextField
+											size='small'
+											label={`Option${index + 1}`}
+											name='label'
+											type='text'
+											value={option.value}
+											onChange={(e) => handleOptionChange(e, index)}
+											sx={{ my: 1 }}
+											fullWidth
+											required
+											key={index}
+										/>
+									))
+								}
+							</>
+						)
+					}
+					<FormControlLabel
+						control={
+							<Checkbox
+								checked={newField.required}
+								onChange={handleValidationChange}
+								color="primary"
+							/>
+						}
+						label="Required"
+					/>
 					<Button type='submit' variant='contained' sx={{textTransform:'none',background:'#000'}} fullWidth>Add Field</Button>
 				 </form>
-					<Typography variant='h6' className='mt-4'>Added Fields:</Typography>
-				{formFields.map((field) => (
-		<Box key={field.id} sx={{ my: 2 }}>
-			<Typography variant='body1'>{field.label} ({field.type})</Typography>
-		</Box>
-		))}
+			</Container>
+
+			<Container maxWidth='xs' className='mt-10 h-[600px] overflow-y-scroll p-3 pageBg'>
+        <Box className='text-lg text-center font-semibold my-2'>Dynamic fields</Box>
+				<AllFields
+					formFields={formFields}
+					setFormFields={setFormFields}
+				/>
 			</Container>
 		</Box>
 	)

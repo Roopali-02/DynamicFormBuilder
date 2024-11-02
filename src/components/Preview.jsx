@@ -20,9 +20,9 @@ const Preview = ({}) => {
 };
 
   return (
-    <Box  sx={style} className='previewModalBg'>
-     <Typography variant="h5" className="text-center">Preview</Typography>
-     <Box className='my-2'>
+    <Box sx={style} className='previewModalBg h-[600px] overflow-y-scroll'>
+     <Typography variant="h6" className="text-center  text-white previewTitleBg rounded-sm py-1">Preview</Typography>
+     <Box className='mt-4 mb-2'>
        {
           formFields.map((field,index) => (
             <Box 

@@ -14,3 +14,8 @@ background: linear-gradient(22.5deg, rgba(66, 66, 66, 0.02) 0%, rgba(66, 66, 66,
    color:#000 !important;
    --webkit-text-fill-color:unset !important;
 }
+
+.previewTitleBg{
+background: linear-gradient(128deg, rgba(10, 10, 10, 0.06) 0%, rgba(10, 10, 10, 0.06) 50%, rgba(193, 193, 193, 0.06) 50%, rgba(193, 193, 193, 0.06) 100%), linear-gradient(51deg, rgba(231, 231, 231, 0.06) 0%, rgba(231, 231, 231, 0.06) 50%, rgba(39, 39, 39, 0.06) 50%, rgba(39, 39, 39, 0.06) 100%), linear-gradient(90deg, hsl(216, 75%, 70%), hsl(216, 75%, 70%));
+  background-size: 56px 56px;
+}

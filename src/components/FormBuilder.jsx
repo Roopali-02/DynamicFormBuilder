@@ -1,5 +1,5 @@
-import React,{useState,useContext} from 'react';
-import { Box, Typography, Container, TextField, FormControl, InputLabel, Select, MenuItem, Button, Checkbox, FormControlLabel,Modal,useMediaQuery } from '@mui/material';
+import React,{useState,useContext,useEffect} from 'react';
+import { Box, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Button, Checkbox, FormControlLabel,Modal,useMediaQuery,Alert } from '@mui/material';
 import axios from 'axios';
 import AllFields from './AllFields';
 import { FormContext } from '../context/FormContext';
@@ -7,6 +7,7 @@ import Preview from './Preview';
 const FormBuilder = () => {
 	const smallScreen = useMediaQuery('(max-width:600px)');
 	const { formFields, setFormFields, getAllFields } = useContext(FormContext);
+	const [alert,setAlert] = useState({show:false,type:'',message:''});
 	const [open,setOpen] = useState(false);
 	const [newField,setNewField] = useState({
 		type:'',
@@ -15,6 +16,16 @@ const FormBuilder = () => {
 		required:false,
 		options: [] 
 	});
+
+	useEffect(()=>{
+		let timer;
+		if(alert.show){
+			timer = setTimeout(()=>{
+       setAlert({show:false,type:'',message:''})
+			},3000)
+		}
+		return()=>clearTimeout(timer);
+	},[alert])
 
 	const handleInputChange = (e)=>{
 		 const {name,value} = e.target;
@@ -50,11 +61,12 @@ const FormBuilder = () => {
 					}));
 					await axios.post(`/api/fields/${fieldId}`, { options: updatedOptions });
 				}
+				setAlert({show:true,type:'success',message:'New field created successfully!'})
 				setNewField({ type: '', label: '', NoOfOptions: null, required: false, options: [] });
 				getAllFields();
 			}
 		}catch(err){
-			console.log(err);
+			setAlert({show:true,type:'error',message:err.response.data.message})
 		}
 	}
 
@@ -78,7 +90,10 @@ const FormBuilder = () => {
 		<Box className={`flex ${smallScreen?'flex-col':''} justify-center gap-x-4 p-4`}>
 			<Box className={`shadow-md mt-6 builderSectionBg p-4 ${!smallScreen?'w-[380px]':''} ${smallScreen?'h-[300px]':''}`}>
 				 <Typography variant='h5' className='text-center'>Dynamic Form Builder</Typography>
-				 <form onSubmit={addField} className='p-4 shadow-lg'>
+				 {
+					alert.show&&<Alert severity={alert.type}>{alert.message}</Alert>
+				 }
+				 <form onSubmit={addField} className='px-4 pt-4 pb-6 shadow-lg'>
 					<TextField
 						size='small'
 						label="Label"
@@ -86,13 +101,13 @@ const FormBuilder = () => {
 						type='text'
 						value={newField.label}
 						onChange={handleInputChange}
-						sx={{my:1}}
+						sx={{mb:2}}
 						fullWidth
 						required
 					/>
 					<FormControl
 						size='small'
-						sx={{ mb:1}}
+						sx={{ mb:2}}
 						fullWidth
 						required
 					>
@@ -126,7 +141,7 @@ const FormBuilder = () => {
 										NoOfOptions: parseInt(e.target.value, 10) || 0,
 										options: Array.from({ length: parseInt(e.target.value, 10) || 0 }, () => ({ value: '' })),
 									}))}
-									sx={{ my: 1 }}
+									sx={{ mb: 1 }}
 									fullWidth
 									required
 								/>

@@ -1,11 +1,13 @@
 import React,{useState,useContext} from 'react';
-import { Box, Typography, Container, TextField, FormControl, InputLabel, Select, MenuItem, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Typography, Container, TextField, FormControl, InputLabel, Select, MenuItem, Button, Checkbox, FormControlLabel,Modal,useMediaQuery } from '@mui/material';
 import axios from 'axios';
 import AllFields from './AllFields';
 import { FormContext } from '../context/FormContext';
-
+import Preview from './Preview';
 const FormBuilder = () => {
+	const smallScreen = useMediaQuery('(max-width:600px)');
 	const { formFields, setFormFields, getAllFields } = useContext(FormContext);
+	const [open,setOpen] = useState(false);
 	const [newField,setNewField] = useState({
 		type:'',
 		label:'',
@@ -48,14 +50,12 @@ const FormBuilder = () => {
 					}));
 					await axios.post(`/api/fields/${fieldId}`, { options: updatedOptions });
 				}
-
 				setNewField({ type: '', label: '', NoOfOptions: null, required: false, options: [] });
 				getAllFields();
 			}
 		}catch(err){
 			console.log(err);
 		}
-		
 	}
 
 	const handleValidationChange = (e) => {
@@ -66,10 +66,18 @@ const FormBuilder = () => {
 		));
 	};
 
+	//Model open/close 
+	const triggerModalOpen = ()=>{
+    setOpen(true);
+	}
+	const handleClose = ()=>{
+		setOpen(false);
+	}
+
 	return (
-		<Box className='w-full flex gap-2'>
-			<Container maxWidth='xs' className='mt-10 pageBg p-4'>
-				 <Typography variant='h4' className='text-center'>Dynamic Form Builder</Typography>
+		<Box className={`flex ${smallScreen?'flex-col':''} justify-center gap-x-4 p-4`}>
+			<Box className={`shadow-md mt-6 builderSectionBg p-4 ${!smallScreen?'w-[380px]':''} ${smallScreen?'h-[300px]':''}`}>
+				 <Typography variant='h5' className='text-center'>Dynamic Form Builder</Typography>
 				 <form onSubmit={addField} className='p-4 shadow-lg'>
 					<TextField
 						size='small'
@@ -153,15 +161,28 @@ const FormBuilder = () => {
 					/>
 					<Button type='submit' variant='contained' sx={{textTransform:'none',background:'#000'}} fullWidth>Add Field</Button>
 				 </form>
-			</Container>
+			</Box>
 
-			<Container maxWidth='xs' className='mt-10 h-[600px] overflow-y-scroll p-3 pageBg'>
-        <Box className='text-lg text-center font-semibold my-2'>Dynamic fields</Box>
-				<AllFields
-					formFields={formFields}
-					setFormFields={setFormFields}
-				/>
-			</Container>
+			<Box className={` ${!smallScreen?'w-[380px]':''} shadow-md mt-6 h-[600px] p-4 pageBg overflow-y-scroll`}>
+        <Box 
+				  className='mb-5 mt-2 flex justify-between items-center'>
+					<Box className='text-lg font-semibold '>Dynamic fields</Box>
+					<Button variant='contained' size='small' sx={{background:'#000'}} onClick={triggerModalOpen}>Preview</Button>
+					</Box>
+					<AllFields
+						formFields={formFields}
+						setFormFields={setFormFields}
+					/>
+			</Box>
+			{
+				open&&
+				<Modal
+					open={open}
+					onClose={handleClose}
+				>
+				 <Preview/>
+				</Modal>
+			}
 		</Box>
 	)
 }

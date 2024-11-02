@@ -6,10 +6,9 @@ import { FormContext } from '../context/FormContext';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const AllFields = () => {
-  const { formFields, setFormFields, getAllFields } = useContext(FormContext);
-  const [alert,showAlert] = useState({show:false,type:'',message:''});
-  const [formValues,setFormValues] = useState({});
-
+  const { formFields, setFormFields, getAllFields,formValues, setFormValues } = useContext(FormContext);
+  const [alert,setAlert] = useState({show:false,type:'',message:''});
+  const [error,setError]= useState({})
 
   useEffect(() => {
     const initialValues = formFields.reduce((acc, field) => {
@@ -42,35 +41,78 @@ const AllFields = () => {
     let timer;
     if(alert.show){
     timer =  setTimeout(()=>{
-        showAlert({ show: false, type: '', message: '' });
+        setAlert({ show: false, type: '', message: '' });
       },3000)
     }
     return () => clearTimeout(timer);
   },[alert])
 
-  const handleSubmit = (e)=>{
+  const handleSubmit = async (e)=>{
     e.preventDefault();
+    try{
+       const response =await axios.post('/api/final-submission/submit',{ formValues });
+      setAlert({show:true,type:'success',message:response.data.message});
+      const resetValues = formFields.reduce((acc, field) => {
+      acc[`${field.label}_${field._id}`] = field.type === 'checkbox' ? false : '';
+      return acc;
+    }, {});
+    setFormValues(resetValues);
+    }catch(err){
+        console.log(err);
+        setAlert({show:true,type:'error',message:err.response.data.message});
+    }
   }
 
   const deleteField = async(id)=>{
     try{
       const response =await axios.delete(`/api/delete-field/${id}`);
-      showAlert({ show: true, type: 'success', message: response.data.message })
+      setAlert({ show: true, type: 'success', message: response.data.message })
       await getAllFields();
     }catch(err){
-      showAlert({ show: true, type: 'error', message: err.response.data.message })
+      setAlert({ show: true, type: 'error', message: err.response.data.message })
+    }
+  }
+
+  const validateFields = (fieldType,name,value)=>{
+    let regex, errorMessage;
+    switch(fieldType){
+      case 'text':
+        regex = /^[A-Za-z\s]+$/;
+        errorMessage = 'Only alphabetic characters are allowed!';
+        break; 
+      case 'number':
+        regex =  /^\d{1,10}$/;
+        errorMessage = 'Enter between 1 and 10 digits.';
+        break;
+      case 'email':
+        regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        errorMessage = 'Invalid email format!';
+      break;
+    default:
+      regex = null;
+      errorMessage = '';
+    }
+   if (value&&regex && !regex.test(value)) {
+      setError((prev) => ({ ...prev, [name]: errorMessage }));
+    } else {
+      setError((prev) => ({ ...prev, [name]: '' }));
     }
   }
 
   const textTypeInput = (e)=>{
-      const {name,value} = e.target;
-      setFormValues((prev)=>({...prev,[name]:value}));
-  }
-
-  console.log(formValues);
-
-  const handleInputChange = (e)=>{
+    const {name,value,type: fieldType} = e.target;
     console.log(e);
+    const field = formFields.find(field => field.label === name.split('_')[0]);
+    const isRequired = field?.required;
+    validateFields(fieldType,name, value)
+
+    if (field.type === 'dropdown' && isRequired && (value === '' || value === null)) {
+        setError((prev) => ({ ...prev, [name]: 'This field is required!' }));
+    } else {
+        setError((prev) => ({ ...prev, [name]: '' })); 
+    }
+
+    setFormValues((prev)=>({...prev,[name]:value}));
   }
 
   const setCheckboxValue = (e)=>{
@@ -86,9 +128,9 @@ const AllFields = () => {
       <Droppable droppableId="fields">
       {
         (provided)=>(
-          <form onSubmit={handleSubmit} ref={provided.innerRef} {...provided.droppableProps}>
+          <form onSubmit={handleSubmit} ref={provided.innerRef} {...provided.droppableProps} className="z-20">
             {
-              alert.show && <Alert severity={alert.type} className='my-1'>{alert.message}</Alert>
+              alert.show && <Alert severity={alert.type} className='mb-2 mt-1'>{alert.message}</Alert>
             }
             {
               formFields.map((field,index) => (
@@ -111,9 +153,12 @@ const AllFields = () => {
                               name={`${field.label}_${field._id}`}
                               label={field.label}
                               required={field.required}
+                              value={formValues[`${field.label}_${field._id}`] || ''}
                               onChange={textTypeInput}
                               sx={{ mb: 1 }}
                               fullWidth
+                              error={!!error[`${field.label}_${field._id}`]}
+                              helperText={error[`${field.label}_${field._id}`]}
                             />
                           }
                           {field.type === 'email' &&
@@ -123,9 +168,12 @@ const AllFields = () => {
                               name={`${field.label}_${field._id}`}
                               label={field.label}
                               required={field.required}
+                              value={formValues[`${field.label}_${field._id}`] || ''}
                               onChange={textTypeInput}
                               sx={{ mb: 1 }}
                               fullWidth
+                              error={!!error[`${field.label}_${field._id}`]}
+                              helperText={error[`${field.label}_${field._id}`]}
                             />
                           }
                           {field.type === 'number' &&
@@ -135,9 +183,12 @@ const AllFields = () => {
                               name={`${field.label}_${field._id}`}
                               label={field.label}
                               required={field.required}
+                              value={formValues[`${field.label}_${field._id}`] || ''}
                               onChange={textTypeInput}
                               sx={{ mb: 1 }}
                               fullWidth
+                              error={!!error[`${field.label}_${field._id}`]}
+                              helperText={error[`${field.label}_${field._id}`]}
                             />
                           }
                           {field.type === 'checkbox' &&
@@ -146,6 +197,7 @@ const AllFields = () => {
                                 <Checkbox
                                   checked={!!formValues[`${field.label}_${field._id}`]}
                                   color="primary"
+                                  value={formValues[`${field.label}_${field._id}`] || ""} 
                                   onChange={setCheckboxValue}
                                   name={`${field.label}_${field._id}`}
                                 />
@@ -168,10 +220,12 @@ const AllFields = () => {
                                   name={`${field.label}_${field._id}`}
                                   onChange={textTypeInput}
                                   value={formValues[`${field.label}_${field._id}`] || ""}
+                                   error={!!error[`${field.label}_${field._id}`]} // Set error state
                               >
+                              <MenuItem value=''>None</MenuItem>
                                 {
-                                  field.options.map((option) => (
-                                    <MenuItem value={option.value}>{option.value}</MenuItem>
+                                  field.options.map((option,index) => (
+                                    <MenuItem key={index} value={option.value}>{option.value}</MenuItem>
                                   ))
                                 }
                               </Select>
@@ -189,6 +243,7 @@ const AllFields = () => {
                 </Draggable>
               ))
             }
+            {provided.placeholder}
             <Button variant='contained' type='submit' fullWidth>Submit</Button>
           </form>
         )

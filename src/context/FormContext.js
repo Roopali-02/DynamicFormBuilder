@@ -5,6 +5,7 @@ export const FormContext = createContext();
 
 export const FormProvider = ({children})=>{
   const [formFields, setFormFields] = useState([]);
+  const [formValues, setFormValues] = useState({});
 
   useEffect(()=>{
     getAllFields();
@@ -20,7 +21,7 @@ export const FormProvider = ({children})=>{
   }
 
   return(
-    <FormContext.Provider value={{ formFields, getAllFields, setFormFields }}>
+    <FormContext.Provider value={{ formFields, getAllFields, setFormFields, formValues, setFormValues }}>
       {children}
     </FormContext.Provider>
   )

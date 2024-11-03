@@ -1,3 +1,64 @@
+# Project Title
+Dynamic Form Builder
+
+## Description
+Dynamic Form Builder is a web application that allows users to create, customize, and manage forms dynamically. With an intuitive drag-and-drop interface, users can add various input types, configure validation rules, and easily integrate forms into their applications.
+
+## Installation
+To install the project, follow these steps:
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/Roopali-02/DynamicFormBuilder.git
+    ```
+
+2. Navigate to the backend directory:
+    ```bash
+    cd DynamicFormBuilder/backend
+    ```
+
+3. Install the backend dependencies:
+    ```bash
+    npm install
+    ```
+
+4. Start the backend server:
+    ```bash
+    npm run dev
+    ```
+
+5. Open a new terminal window, and navigate back to the project root directory:
+    ```bash
+    cd ..
+    ```
+
+6. Install the frontend dependencies:
+    ```bash
+    npm install
+    ```
+
+7. Start the frontend application:
+    ```bash
+    npm start
+    ```
+## Environment Variables
+This project requires the following environment variables to be set in the backend:
+
+- **MONGO_URI**: The connection string for your MongoDB database. You can create a `.env` file in the backend directory and add the following line:
+
+    ```plaintext
+    MONGO_URI="your_mongodb_connection_string_here"
+    ```
+
+    Replace `your_mongodb_connection_string_here` with your actual MongoDB URI, which you should keep private and not share publicly.
+
+### .gitignore for the .env File
+Ensure that your `.env` file (where the actual URI will be stored) is listed in your `.gitignore` file. This prevents it from being pushed to your Git repository:
+
+```plaintext
+# .gitignore
+.env
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

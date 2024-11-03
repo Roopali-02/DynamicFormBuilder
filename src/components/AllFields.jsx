@@ -150,6 +150,10 @@ const AllFields = () => {
 							)
 						}
 						{
+							formFields.length===0&&
+						<Box className='font-bold text-lg flex justify-center items-center h-[600px]'>NO FIELDS!</Box>
+						}
+						{
 							formFields.map((field,index) => (
 								<Draggable key={field._id} draggableId={field._id} index={index}>
 								{
@@ -264,7 +268,7 @@ const AllFields = () => {
 							))
 						}
 						{provided.placeholder}
-						<Button variant='contained' type='submit' sx={{mt:2}} fullWidth>Submit</Button>
+						<Button variant='contained' type='submit' sx={{mt:2}} fullWidth disabled={formFields.length===0}>Submit</Button>
 					</form>
 				)
 			}
